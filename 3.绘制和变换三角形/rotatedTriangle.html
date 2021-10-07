@@ -1,0 +1,90 @@
+<!DOCTYPEhtml>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="./../utils/index.js"></script>
+</head>
+<body>
+  <canvas width="500" height="500"></canvas>
+
+  <script>
+    const canvas = document.querySelector('canvas')
+    const gl = canvas.getContext('webgl')
+
+    // x' = x * cosa - y * sina
+    // y' = x * sina + y * cosa
+    var verctor_shader =
+  // x' = x cosβ - y sinβ
+  // y' = x sinβ + y cosβ　Equation 3.3
+  // z' = z
+  'attribute vec4 a_Position;\n' +
+  'uniform float u_CosB, u_SinB;\n' +
+  'void main() {\n' +
+  '  gl_Position.x = a_Position.x * u_CosB - a_Position.y * u_SinB;\n' +
+  '  gl_Position.y = a_Position.x * u_SinB + a_Position.y * u_CosB;\n' +
+  '  gl_Position.z = a_Position.z;\n' +
+  '  gl_Position.w = 1.0;\n' +
+  '}\n';
+
+    const fragement_shader = `
+      void main() {
+        gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+      }
+    `
+    const ANGLE = 90.0
+
+    function main() {
+      const init = initShaders(gl, verctor_shader, fragement_shader)
+      console.log(gl.program)
+      const n = initVertexBuffers()
+
+      const radian = Math.PI * ANGLE / 180
+      const cosB = Math.cos(radian)
+      const sinB = Math.sin(radian)
+
+      const u_CosB = gl.getUniformLocation(gl.program, 'u_CosB')
+      const u_SinB = gl.getUniformLocation(gl.program, 'u_SinB')
+      gl.uniform1f(u_CosB, cosB)
+      gl.uniform1f(u_SinB, sinB)
+    
+      gl.clearColor(0.0, 0.0, 0.0, 1.0)
+
+      gl.clear(gl.COLOR_BUFFER_BIT)
+
+      gl.drawArrays(gl.TRIANGLES, 0, n - 0)
+    }
+
+    function initVertexBuffers() {
+      const vertices = new Float32Array([
+        0.0, 0.5,   -0.5, -0.5,   0.5, -0.5
+      ])
+      const n = 3
+      // create a buffer object
+      const vertexBuffer = gl.createBuffer()
+
+      // bind the buffer object to target
+      gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
+      
+      // write data into the buffer object
+      gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW)
+
+      const a_Position = gl.getAttribLocation(gl.program, 'a_Position')
+      gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0)
+
+      // const u_Translation = gl.getUniformLocation(gl.program, 'u_Translation')
+      // gl.uniform4f(u_Translation, Tx, Ty, Tz, 0.0)
+
+      gl.enableVertexAttribArray(a_Position)
+
+      return n
+    }
+
+    main()
+
+    
+  </script>
+</body>
+</html>

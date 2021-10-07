@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="./../utils/index.js"></script>
+  <script src="./../lib/cuon-matrix.js"></script>
+</head>
+<body>
+  <canvas width="500" height="500"></canvas>
+
+  <script>
+    const canvas = document.querySelector('canvas')
+    const gl = canvas.getContext('webgl')
+
+    const vertex_shader = `
+      attribute vec4 a_Position;
+      uniform mat4 u_ModelMatrix;
+      void main() {
+        gl_Position = u_ModelMatrix * a_Position;
+      }
+    `
+
+    const fragement_shader = `
+      void main() {
+        gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+      }
+    `
+
+    const ANGLE_STEP = 45
+
+    function initVertexBuffers() {
+      const vertices = new Float32Array([
+        0.0, 0.5,  -0.5, -0.5, 0.5, -0.5
+      ])
+
+      const n = 3
+
+      const vertexBuffer = gl.createBuffer()
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
+
+      gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW)
+
+      const a_Position = gl.getAttribLocation(gl.program, 'a_Position')
+
+      gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0)
+
+      gl.enableVertexAttribArray(a_Position)
+
+      return n
+    }
+
+    function draw(gl, n, currentAngle, modelMatrix, u_ModelMatrix) {
+      modelMatrix.setRotate(currentAngle, 0, 0, 1)
+      modelMatrix.translate(0.35, 0, 0)
+
+      gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements)
+
+      gl.clear(gl.COLOR_BUFFER_BIT)
+
+      gl.drawArrays(gl.TRIANGLES, 0, n)
+    }
+    
+    function main() {
+      initShaders(gl, vertex_shader, fragement_shader)
+      
+      const n = initVertexBuffers()
+
+      gl.clearColor(0.0, 0.0, 0.0, 1.0)
+
+      const u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix')
+
+      let currentAngle = 0;
+
+      const modelMatrix = new Matrix4()
+
+      const tick = () => {
+        currentAngle = animate(currentAngle)
+        draw(gl, n , currentAngle, modelMatrix, u_ModelMatrix)
+        requestAnimationFrame(tick, canvas)
+      }
+
+      tick()
+    }
+
+    let g_last = Date.now()
+
+    function animate(angle) {
+      const now = Date.now()
+      let elapsed = now - g_last
+      g_last = now
+
+      let newAngle = angle + (ANGLE_STEP * elapsed) / 1000
+
+      return newAngle %= 360
+    }
+
+    main()
+
+    
+  </script>
+</body>
+</html>

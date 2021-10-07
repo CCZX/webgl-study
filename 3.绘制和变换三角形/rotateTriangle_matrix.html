@@ -1,0 +1,105 @@
+<!DOCTYPEhtml>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="./../utils/index.js"></script>
+</head>
+<body>
+  <canvas width="500" height="500"></canvas>
+
+  <script>
+    const canvas = document.querySelector('canvas')
+    const gl = canvas.getContext('webgl')
+
+    // x' = x * cosa - y * sina
+    // y' = x * sina + y * cosa
+    var vertex_shader =`
+      attribute vec4 a_Position;
+      uniform mat4 u_xformMatrix;
+      void main() {
+        gl_Position = u_xformMatrix * a_Position;
+      }
+    `
+
+    const fragement_shader = `
+      void main() {
+        gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+      }
+    `
+    const ANGLE = 60.0
+
+    function main() {
+      const init = initShaders(gl, vertex_shader, fragement_shader)
+      const n = initVertexBuffers()
+
+      const radian = Math.PI * ANGLE / 180
+      const cosB = Math.cos(radian)
+      const sinB = Math.sin(radian)
+
+      const xformMatrix = new Float32Array([
+        cosB,  sinB, 0.0, 0.0,
+        -sinB, cosB, 0.0, 0.0,
+        0.0,   0.0,  1.0, 0.0,
+        0.0,   0.0,  0.0, 1.0,
+      ])
+
+      const u_xformMatrix = gl.getUniformLocation(gl.program, 'u_xformMatrix')
+      gl.uniformMatrix4fv(u_xformMatrix, false, xformMatrix)
+    
+      gl.clearColor(0.0, 0.0, 0.0, 1.0)
+
+      gl.clear(gl.COLOR_BUFFER_BIT)
+
+      gl.drawArrays(gl.TRIANGLES, 0, n - 0)
+    }
+
+    function initVertexBuffers() {
+      const vertices = new Float32Array([
+        0.0, 0.5,   -0.5, -0.5,   0.5, -0.5
+      ])
+      const n = 3
+      // create a buffer object
+      const vertexBuffer = gl.createBuffer()
+
+      // bind the buffer object to target
+      gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
+      
+      // write data into the buffer object
+      gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW)
+
+      const a_Position = gl.getAttribLocation(gl.program, 'a_Position')
+      gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0)
+
+      // const u_Translation = gl.getUniformLocation(gl.program, 'u_Translation')
+      // gl.uniform4f(u_Translation, Tx, Ty, Tz, 0.0)
+
+      gl.enableVertexAttribArray(a_Position)
+
+      return n
+    }
+
+    function initShaders(gl, vShaderSource, fShaderSource) {
+      const vShader = gl.createShader(gl.VERTEX_SHADER)
+      gl.shaderSource(vShader, vShaderSource)
+      gl.compileShader(vShader)
+      
+      const fShader = gl.createShader(gl.FRAGMENT_SHADER)
+      gl.shaderSource(fShader, fShaderSource)
+      gl.compileShader(fShader)
+      
+      const program = gl.createProgram()
+      gl.attachShader(program, vShader)
+      gl.attachShader(program, fShader)
+      gl.linkProgram(program)
+      gl.useProgram(program)
+      
+      gl.program = program
+    }
+
+    main()
+  </script>
+</body>
+</html>
